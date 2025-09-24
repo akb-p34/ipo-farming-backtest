@@ -2,7 +2,7 @@
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange.svg)](https://jupyter.org/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Private](https://img.shields.io/badge/Repository-Private-red.svg)]()
 
 A sophisticated backtesting system for IPO day trading strategies. Analyze 90+ trading windows to identify optimal entry and exit points for IPO stocks on their first trading day.
 
@@ -145,19 +145,13 @@ The notebook automatically installs required packages:
 4. **Backtesting Limitations**: Past performance doesn't predict future results
 5. **Market Conditions**: Strategies may not work in all market conditions
 
-## 🤝 Contributing
+## 🔒 Access
 
-Contributions are welcome! Please feel free to:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+This is a private repository. Access is restricted to authorized users only.
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is proprietary and confidential. All rights reserved. No part of this software may be reproduced, distributed, or transmitted without prior written permission.
 
 ## 🙏 Acknowledgments
 
@@ -167,10 +161,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-For questions, suggestions, or collaboration:
-- Open an issue on GitHub
-- Email: your.email@example.com
-- LinkedIn: [Your Profile](https://linkedin.com/in/yourprofile)
+For authorized access or questions, contact the repository owner.
 
 ## 🚨 Risk Disclosure
 
@@ -178,6 +169,6 @@ For questions, suggestions, or collaboration:
 
 ---
 
-**Made with ❤️ by the Quantitative Trading Community**
+**© 2024 - All Rights Reserved**
 
-*If you find this project useful, please consider giving it a ⭐ on GitHub!*
+*This is proprietary software. Unauthorized use, reproduction, or distribution is prohibited.*
