@@ -31,9 +31,12 @@ wheels/
 outputs/*
 !outputs/.gitkeep
 
-# Data files (generated)
-data/
-*.csv
+# Data files
+data/*.xlsx
+# Keep the ticker classification files
+!data/active_tickers.csv
+!data/delisted_tickers.csv
+!data/combined_universe.csv
 
 # IDE
 .vscode/
