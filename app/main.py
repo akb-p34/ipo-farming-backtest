@@ -29,13 +29,21 @@ st.set_page_config(
 # Custom CSS for dark theme with sharp edges and Helvetica fonts
 st.markdown("""
 <style>
-    /* Font family override */
-    * {
-        font-family: 'Helvetica Neue', 'Helvetica', sans-serif !important;
+    /* Main container centering */
+    .stApp > div:first-child {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 40px;
     }
 
-    /* Bold headings and buttons */
-    h1, h2, h3, h4, h5, h6, .stButton > button, .main-header {
+    /* Font family override - Body text */
+    * {
+        font-family: 'Helvetica Neue', 'Helvetica', sans-serif !important;
+        font-weight: 400;
+    }
+
+    /* Bold headings and buttons - Helvetica Bold */
+    h1, h2, h3, h4, h5, h6, .stButton > button, .main-header, .stMarkdown h3, .stMarkdown h4 {
         font-family: 'Helvetica Bold', 'Helvetica Neue', 'Helvetica', sans-serif !important;
         font-weight: 700;
     }
@@ -44,6 +52,18 @@ st.markdown("""
     .stApp {
         background-color: #0a0a0a;
         color: #ffffff;
+    }
+
+    /* Content spacing */
+    .main-content {
+        padding: 20px;
+        margin: 20px 0;
+    }
+
+    /* Section spacing */
+    .section-spacing {
+        margin: 30px 0;
+        padding: 0 20px;
     }
 
     /* Remove rounded corners */
@@ -129,6 +149,55 @@ st.markdown("""
         background-color: rgba(255, 51, 102, 0.1);
         border: 1px solid #ff3366;
         border-radius: 0px;
+    }
+
+    /* Advanced Options Expander Fixes */
+    .streamlit-expanderHeader {
+        background-color: #1a1a1a !important;
+        border: 1px solid #333333 !important;
+        border-radius: 0px !important;
+        color: #ffffff !important;
+        font-family: 'Helvetica Bold', 'Helvetica Neue', 'Helvetica', sans-serif !important;
+        font-weight: 700 !important;
+    }
+
+    /* Hide the default expander arrow text */
+    .streamlit-expanderHeader svg {
+        color: #ffffff !important;
+    }
+
+    /* Custom config summary box */
+    .config-summary {
+        background-color: #0a0a0a;
+        border: 1px solid #ffffff;
+        padding: 20px;
+        border-radius: 0px;
+        margin: 20px 0;
+        font-family: 'Helvetica Neue', 'Helvetica', sans-serif !important;
+    }
+
+    /* Checkbox styling fix */
+    .stCheckbox > label > div[data-testid="stCheckbox"] > div {
+        background-color: #1a1a1a !important;
+        border: 1px solid #ffffff !important;
+        border-radius: 0px !important;
+    }
+
+    .stCheckbox > label > div[data-testid="stCheckbox"] > div[data-checked="true"] {
+        background-color: #ffffff !important;
+    }
+
+    .stCheckbox > label > div[data-testid="stCheckbox"] > div[data-checked="true"] svg {
+        color: #0a0a0a !important;
+    }
+
+    /* Data source info button */
+    .info-button {
+        width: 30px !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        padding: 0 !important;
+        font-size: 14px !important;
     }
 
     /* Custom header */
@@ -222,12 +291,24 @@ with tab1:
                 step=10000
             )
 
-            data_mode = st.radio(
-                "Data Source",
-                ["SIMULATION", "YAHOO", "IBKR"],
-                index=0,
-                horizontal=True
-            )
+            # Data source with info button
+            col_radio, col_info = st.columns([4, 1])
+            with col_radio:
+                data_mode = st.radio(
+                    "Data Source",
+                    ["SIMULATION", "YAHOO", "IBKR"],
+                    index=0,
+                    horizontal=True
+                )
+            with col_info:
+                if st.button("ℹ", key="info_data_source", help="Data source information"):
+                    st.info("""
+                    **SIMULATION**: Generated realistic data for testing and development
+
+                    **YAHOO**: Yahoo Finance historical data (limited to recent IPOs)
+
+                    **IBKR**: Interactive Brokers live data (requires TWS/Gateway connection)
+                    """)
 
             position_size = st.number_input(
                 "Position Size (%)",
@@ -243,15 +324,17 @@ with tab1:
         st.markdown("### EXECUTION")
         st.markdown("---")
 
-        # Quick stats
-        st.info(f"""
-        **Configuration Summary:**
-        - Training: {train_split}%
-        - Testing: {test_split}%
-        - Period: {start_date} to {end_date}
-        - Capital: ${initial_capital:,}
-        - Data: {data_mode}
-        """)
+        # Configuration summary with custom styling
+        st.markdown(f"""
+        <div class="config-summary">
+            <strong style="font-family: 'Helvetica Bold', sans-serif;">Configuration Summary:</strong><br>
+            • Training: {train_split}%<br>
+            • Testing: {test_split}%<br>
+            • Period: {start_date} to {end_date}<br>
+            • Capital: ${initial_capital:,}<br>
+            • Data: {data_mode}
+        </div>
+        """, unsafe_allow_html=True)
 
         # Run button
         if st.button("RUN BACKTEST", use_container_width=True, disabled=st.session_state.running_backtest):
@@ -291,6 +374,7 @@ with tab1:
                 # Display results
                 st.markdown("### RESULTS")
 
+                # Main metrics
                 col1, col2, col3, col4 = st.columns(4)
 
                 with col1:
@@ -323,6 +407,34 @@ with tab1:
                         "Degradation",
                         f"{degradation:.1f}%",
                         "Robust" if abs(degradation) < 30 else "Overfitting Risk"
+                    )
+
+                # SPY Benchmark Comparison
+                st.markdown("### BENCHMARK COMPARISON")
+                spy_data = results['spy_benchmark']
+
+                benchmark_col1, benchmark_col2, benchmark_col3 = st.columns(3)
+
+                with benchmark_col1:
+                    st.metric(
+                        "IPO Strategy (Test)",
+                        f"{results['test_portfolio']['total_return_pct']:.2f}%",
+                        f"${results['test_portfolio']['final_value']:,.0f}"
+                    )
+
+                with benchmark_col2:
+                    st.metric(
+                        "SPY Buy & Hold",
+                        f"{spy_data['total_return_pct']:.2f}%",
+                        f"${spy_data['final_value']:,.0f}"
+                    )
+
+                with benchmark_col3:
+                    outperformance = results['test_portfolio']['total_return_pct'] - spy_data['total_return_pct']
+                    st.metric(
+                        "Outperformance",
+                        f"{outperformance:+.2f}%",
+                        "Beats SPY" if outperformance > 0 else "Underperforms SPY"
                     )
 
                 # Save results path
