@@ -424,6 +424,203 @@ class IPOBacktestEngine:
                 'initial_capital': initial_capital
             }
 
+    def generate_pdf_report(self):
+        """Generate comprehensive PDF report"""
+        try:
+            from reportlab.lib.pagesizes import letter
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib import colors
+            from reportlab.lib.units import inch
+            from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+
+            # Create PDF
+            pdf_path = self.output_dir / 'reports' / 'IPO_Strategy_Complete_Report.pdf'
+            doc = SimpleDocTemplate(str(pdf_path), pagesize=letter,
+                                   rightMargin=72, leftMargin=72,
+                                   topMargin=72, bottomMargin=18)
+
+            story = []
+            styles = getSampleStyleSheet()
+
+            # Custom styles
+            title_style = ParagraphStyle(
+                'CustomTitle',
+                parent=styles['Title'],
+                fontSize=28,
+                textColor=colors.HexColor('#1f4788'),
+                spaceAfter=30,
+                alignment=TA_CENTER
+            )
+
+            heading_style = ParagraphStyle(
+                'CustomHeading',
+                parent=styles['Heading1'],
+                fontSize=16,
+                textColor=colors.HexColor('#1f4788'),
+                spaceAfter=12,
+                spaceBefore=12
+            )
+
+            # Title Page
+            story.append(Spacer(1, 2*inch))
+            story.append(Paragraph("IPO Day Trading Strategy", title_style))
+            story.append(Paragraph("Comprehensive Backtest Analysis", styles['Heading2']))
+            story.append(Spacer(1, 0.5*inch))
+            story.append(Paragraph(f"Analysis Period: {self.config['START_DATE']} to {self.config['END_DATE']}", styles['Normal']))
+            story.append(Paragraph(f"Report Generated: {datetime.now().strftime('%B %d, %Y')}", styles['Normal']))
+            story.append(PageBreak())
+
+            # Executive Summary
+            story.append(Paragraph("Executive Summary", heading_style))
+            story.append(Spacer(1, 12))
+
+            summary_text1 = f"""This comprehensive analysis examines IPO day trading strategies across {len(self.ipo_universe)} initial public offerings
+            from {self.config['START_DATE']} to {self.config['END_DATE']}. Using a {int(self.config['TRAIN_TEST_SPLIT']*100)}/{int((1-self.config['TRAIN_TEST_SPLIT'])*100)} train-test split methodology,
+            we identified optimal trading windows that consistently generate positive returns."""
+
+            story.append(Paragraph(summary_text1, styles['BodyText']))
+            story.append(Spacer(1, 12))
+
+            summary_text2 = f"""<b>Key Finding:</b> The optimal strategy involves entering positions at <b>{self.optimal_strategy['buy_time']}</b>
+            and exiting at <b>{self.optimal_strategy['sell_time']}</b>, generating an average return of
+            <b>{self.optimal_strategy['avg_return']:.2f}%</b> per trade with a <b>{self.optimal_strategy['win_rate']:.1f}%</b> win rate."""
+
+            story.append(Paragraph(summary_text2, styles['BodyText']))
+            story.append(Spacer(1, 12))
+
+            summary_text3 = f"""A ${self.config['INITIAL_CAPITAL']:,} portfolio following this strategy on the test set would have grown to
+            <b>${self.results['test_portfolio']['final_value']:,.2f}</b>, representing a
+            <b>{self.results['test_portfolio']['total_return_pct']:+.2f}%</b> total return and
+            <b>{self.results['test_portfolio']['cagr']:.2f}%</b> annual compound growth rate."""
+
+            story.append(Paragraph(summary_text3, styles['BodyText']))
+            story.append(Spacer(1, 20))
+
+            # Key Metrics Table
+            story.append(Paragraph("Key Performance Metrics", heading_style))
+            story.append(Spacer(1, 12))
+
+            train_portfolio = self.results['train_portfolio']
+            test_portfolio = self.results['test_portfolio']
+            spy_benchmark = self.results['spy_benchmark']
+
+            metrics_data = [
+                ['Metric', 'Training', 'Testing', 'SPY Benchmark'],
+                ['Initial Capital', f"${self.config['INITIAL_CAPITAL']:,}", f"${self.config['INITIAL_CAPITAL']:,}", f"${self.config['INITIAL_CAPITAL']:,}"],
+                ['Final Value', f"${train_portfolio['final_value']:,.2f}", f"${test_portfolio['final_value']:,.2f}", f"${spy_benchmark['final_value']:,.2f}"],
+                ['Total Return', f"{train_portfolio['total_return_pct']:.2f}%", f"{test_portfolio['total_return_pct']:.2f}%", f"{spy_benchmark['total_return_pct']:.2f}%"],
+                ['CAGR', f"{train_portfolio['cagr']:.2f}%", f"{test_portfolio['cagr']:.2f}%", f"{spy_benchmark['cagr']:.2f}%"],
+                ['Total Trades', f"{train_portfolio.get('total_trades', 'N/A')}", f"{test_portfolio.get('total_trades', 'N/A')}", '1 (Buy & Hold)'],
+                ['Win Rate', f"{train_portfolio.get('win_rate', 'N/A'):.1f}%", f"{test_portfolio.get('win_rate', 'N/A'):.1f}%", 'N/A']
+            ]
+
+            metrics_table = Table(metrics_data, colWidths=[2*inch, 1.3*inch, 1.3*inch, 1.3*inch])
+            metrics_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1f4788')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 12),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ]))
+            story.append(metrics_table)
+            story.append(PageBreak())
+
+            # Methodology Section
+            story.append(Paragraph("Methodology", heading_style))
+            story.append(Spacer(1, 12))
+
+            method_text1 = f"""<b>1. Data Collection</b><br/>
+            We analyzed {len(self.ipo_universe)} IPOs from a comprehensive database,
+            covering initial public offerings from {self.config['START_DATE']} to {self.config['END_DATE']}.
+            Each IPO's first-day trading data was collected using {self.config['DATA_MODE']} data source."""
+
+            story.append(Paragraph(method_text1, styles['BodyText']))
+            story.append(Spacer(1, 12))
+
+            method_text2 = """<b>2. Train-Test Split Validation</b><br/>
+            To prevent overfitting, we implemented a chronological train-test split methodology.
+            The training set was used to identify optimal strategies, while the test set provided
+            unbiased performance validation on unseen data."""
+
+            story.append(Paragraph(method_text2, styles['BodyText']))
+            story.append(Spacer(1, 12))
+
+            method_text3 = """<b>3. Window Analysis</b><br/>
+            We tested multiple entry and exit time combinations throughout the trading day,
+            evaluating each window across all IPOs to determine average returns, win rates,
+            and risk-adjusted performance metrics."""
+
+            story.append(Paragraph(method_text3, styles['BodyText']))
+            story.append(Spacer(1, 12))
+
+            method_text4 = f"""<b>4. Portfolio Simulation</b><br/>
+            Using the optimal trading window, we simulated a portfolio starting with ${self.config['INITIAL_CAPITAL']:,},
+            applying the strategy chronologically. Position sizing was limited to
+            {self.config['POSITION_SIZE']*100:.0f}% of portfolio value per trade to manage risk."""
+
+            story.append(Paragraph(method_text4, styles['BodyText']))
+            story.append(Spacer(1, 20))
+
+            # Strategy Recommendations
+            story.append(Paragraph("Strategy Recommendations", heading_style))
+            story.append(Spacer(1, 12))
+
+            rec_text1 = f"""<b>Primary Strategy (Optimal Returns)</b><br/>
+            • Entry Time: <b>{self.optimal_strategy['buy_time']}</b><br/>
+            • Exit Time: <b>{self.optimal_strategy['sell_time']}</b><br/>
+            • Expected Return: <b>{self.optimal_strategy['avg_return']:.2f}%</b> per trade<br/>
+            • Win Rate: <b>{self.optimal_strategy['win_rate']:.1f}%</b><br/>
+            • Risk-Reward: Sharpe ratio of <b>{self.optimal_strategy['sharpe']:.2f}</b>"""
+
+            story.append(Paragraph(rec_text1, styles['BodyText']))
+            story.append(Spacer(1, 12))
+
+            rec_text2 = f"""<b>Implementation Guidelines</b><br/>
+            1. <b>Pre-market Preparation:</b> Identify IPOs scheduled for the day and set alerts<br/>
+            2. <b>Entry Criteria:</b> Place limit orders at {self.optimal_strategy['buy_time']} to control entry price<br/>
+            3. <b>Position Sizing:</b> Risk no more than {self.config['POSITION_SIZE']*100:.0f}% of portfolio per trade<br/>
+            4. <b>Exit Strategy:</b> Use market orders at {self.optimal_strategy['sell_time']} to ensure execution<br/>
+            5. <b>Risk Management:</b> Skip trades if IPO opens more than 50% above offering price"""
+
+            story.append(Paragraph(rec_text2, styles['BodyText']))
+            story.append(Spacer(1, 20))
+
+            # Risk Disclosure
+            story.append(Paragraph("Risk Disclosure", heading_style))
+            story.append(Spacer(1, 12))
+
+            disclaimer = """<b>Important:</b> This analysis is based on historical data and backtesting results.
+            Past performance does not guarantee future results. IPO trading involves substantial risk,
+            including the potential for complete loss of capital. Market conditions, regulations,
+            and IPO characteristics may change over time, affecting strategy performance.
+            This report is for informational purposes only and does not constitute investment advice.
+            Always conduct your own research and consult with qualified financial advisors before
+            making investment decisions."""
+
+            disclaimer_style = ParagraphStyle(
+                'Disclaimer',
+                parent=styles['Normal'],
+                fontSize=10,
+                alignment=TA_JUSTIFY
+            )
+
+            story.append(Paragraph(disclaimer, disclaimer_style))
+
+            # Build PDF
+            doc.build(story)
+            return str(pdf_path)
+
+        except ImportError:
+            print("Warning: reportlab not installed. Skipping PDF generation.")
+            return None
+        except Exception as e:
+            print(f"Error generating PDF: {str(e)}")
+            return None
+
     def run_backtest(self, progress_callback=None):
         """Run complete backtest"""
         # Setup
@@ -453,8 +650,8 @@ class IPOBacktestEngine:
             progress_callback(0.8, "Testing on holdout data...")
 
         # Simulate portfolios
-        train_portfolio = self.simulate_portfolio(self.train_universe, self.optimal_strategy)
-        test_portfolio = self.simulate_portfolio(self.test_universe, self.optimal_strategy)
+        train_portfolio = self.simulate_portfolio(self.train_universe, self.optimal_strategy, self.config['INITIAL_CAPITAL'])
+        test_portfolio = self.simulate_portfolio(self.test_universe, self.optimal_strategy, self.config['INITIAL_CAPITAL'])
 
         # Calculate SPY benchmark
         spy_benchmark = self.calculate_spy_benchmark(
@@ -475,6 +672,14 @@ class IPOBacktestEngine:
 
         with open(self.output_dir / 'analysis' / 'backtest_results.json', 'w') as f:
             json.dump(self.results, f, indent=2, default=str)
+
+        # Generate PDF report if requested
+        if self.config.get('GENERATE_PDF', False):
+            if progress_callback:
+                progress_callback(0.95, "Generating PDF report...")
+            pdf_path = self.generate_pdf_report()
+            if pdf_path:
+                self.results['pdf_path'] = pdf_path
 
         if progress_callback:
             progress_callback(1.0, "Backtest complete!")

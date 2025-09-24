@@ -7,7 +7,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import json
 from pathlib import Path
 import time
@@ -88,6 +88,8 @@ st.markdown("""
     .stTabs [data-baseweb="tab-list"] {
         background-color: #1a1a1a;
         border-bottom: 2px solid #333333;
+        justify-content: center;
+        display: flex;
     }
 
     .stTabs [data-baseweb="tab"] {
@@ -97,6 +99,7 @@ st.markdown("""
         border: none;
         font-weight: 600;
         letter-spacing: 1px;
+        font-family: 'Helvetica Bold', 'Helvetica Neue', 'Helvetica', sans-serif !important;
     }
 
     .stTabs [aria-selected="true"] {
@@ -114,6 +117,19 @@ st.markdown("""
         color: #ffffff;
         border: 1px solid #333333;
         border-radius: 0px;
+    }
+
+    /* Dropdown menus - straight edges */
+    .stSelectbox > div > div > div > div {
+        border-radius: 0px !important;
+        background-color: #1a1a1a !important;
+        border: 1px solid #ffffff !important;
+    }
+
+    .stSelectbox [data-baseweb="select"] > div {
+        border-radius: 0px !important;
+        background-color: #1a1a1a !important;
+        border: 1px solid #ffffff !important;
     }
 
     /* Slider styling */
@@ -166,6 +182,46 @@ st.markdown("""
         color: #ffffff !important;
     }
 
+    /* Fix expander content styling */
+    .streamlit-expanderContent {
+        background-color: #0a0a0a !important;
+        border: 1px solid #333333 !important;
+        border-top: none !important;
+        border-radius: 0px !important;
+    }
+
+    /* Fix expander text artifacts - More aggressive approach */
+    .streamlit-expanderHeader div div div {
+        font-size: 0 !important;
+    }
+
+    .streamlit-expanderHeader div div div span {
+        font-size: 14px !important;
+        font-family: 'Helvetica Bold', 'Helvetica Neue', 'Helvetica', sans-serif !important;
+        font-weight: 700 !important;
+    }
+
+    /* Hide specific text nodes containing keyboard_arrow_down */
+    .streamlit-expanderHeader * {
+        text-indent: -9999px;
+        line-height: 0;
+    }
+
+    .streamlit-expanderHeader svg {
+        text-indent: 0 !important;
+        line-height: normal !important;
+    }
+
+    .streamlit-expanderHeader span:first-child {
+        text-indent: 0 !important;
+        line-height: normal !important;
+    }
+
+    /* Alternative approach - hide all text except the label */
+    [data-testid="stExpander"] summary div div:not(:first-child) {
+        display: none !important;
+    }
+
     /* Custom config summary box */
     .config-summary {
         background-color: #0a0a0a;
@@ -203,7 +259,9 @@ st.markdown("""
     /* Custom header */
     .main-header {
         font-size: 2.5em;
-        font-weight: 100;
+        font-weight: 700;
+        font-family: 'Helvetica Bold', 'Helvetica Neue', 'Helvetica', sans-serif !important;
+        text-transform: uppercase;
         letter-spacing: 3px;
         border-bottom: 1px solid #333333;
         padding-bottom: 20px;
@@ -230,6 +288,41 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
 </style>
+
+<script>
+// JavaScript solution to remove keyboard_arrow_down text
+document.addEventListener('DOMContentLoaded', function() {
+    function removeKeyboardArrowText() {
+        const expanderHeaders = document.querySelectorAll('[data-testid="stExpander"] summary');
+        expanderHeaders.forEach(header => {
+            const walker = document.createTreeWalker(
+                header,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            const textNodes = [];
+            let node;
+            while (node = walker.nextNode()) {
+                textNodes.push(node);
+            }
+
+            textNodes.forEach(textNode => {
+                if (textNode.textContent.includes('keyboard_arrow_down')) {
+                    textNode.textContent = textNode.textContent.replace(/keyboard_arrow_down/g, '');
+                }
+            });
+        });
+    }
+
+    // Run immediately and on mutations
+    removeKeyboardArrowText();
+
+    const observer = new MutationObserver(removeKeyboardArrowText);
+    observer.observe(document.body, { childList: true, subtree: true });
+});
+</script>
 """, unsafe_allow_html=True)
 
 # Initialize session state
@@ -276,7 +369,7 @@ with tab1:
 
         end_date = st.date_input(
             "End Date",
-            value=date(2025, 9, 30),
+            value=date.today(),
             min_value=start_date,
             max_value=date(2025, 12, 31)
         )
@@ -291,24 +384,20 @@ with tab1:
                 step=10000
             )
 
-            # Data source with info button
-            col_radio, col_info = st.columns([4, 1])
-            with col_radio:
-                data_mode = st.radio(
-                    "Data Source",
-                    ["SIMULATION", "YAHOO", "IBKR"],
-                    index=0,
-                    horizontal=True
-                )
-            with col_info:
-                if st.button("ℹ", key="info_data_source", help="Data source information"):
-                    st.info("""
-                    **SIMULATION**: Generated realistic data for testing and development
+            # Data source with tooltip
+            data_mode = st.radio(
+                "Data Source",
+                ["SIMULATION", "YAHOO", "IBKR"],
+                index=0,
+                horizontal=True,
+                help="""
+                **SIMULATION**: Generated realistic data for testing and development
 
-                    **YAHOO**: Yahoo Finance historical data (limited to recent IPOs)
+                **YAHOO**: Yahoo Finance historical data (limited to recent IPOs)
 
-                    **IBKR**: Interactive Brokers live data (requires TWS/Gateway connection)
-                    """)
+                **IBKR**: Interactive Brokers live data (requires TWS/Gateway connection)
+                """
+            )
 
             position_size = st.number_input(
                 "Position Size (%)",
@@ -373,69 +462,80 @@ with tab1:
 
                 # Display results
                 st.markdown("### RESULTS")
+                st.markdown("---")
 
-                # Main metrics
-                col1, col2, col3, col4 = st.columns(4)
+                # Optimal Strategy Section
+                st.markdown("#### 🎯 OPTIMAL STRATEGY")
+                st.markdown(f"""
+                <div class="result-card">
+                    <h4 style="color: #00ff88; margin-bottom: 10px;">{results['optimal_strategy']['window']}</h4>
+                    <p><strong>Average Return:</strong> {results['optimal_strategy']['avg_return']:.2f}% per trade</p>
+                    <p><strong>Win Rate:</strong> {results['optimal_strategy']['win_rate']:.1f}%</p>
+                    <p><strong>Sharpe Ratio:</strong> {results['optimal_strategy']['sharpe']:.2f}</p>
+                    <p><strong>Duration:</strong> {results['optimal_strategy']['duration_hrs']:.1f} hours</p>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("---")
 
-                with col1:
-                    st.metric(
-                        "Optimal Strategy",
-                        results['optimal_strategy']['window'],
-                        f"{results['optimal_strategy']['avg_return']:.2f}%"
-                    )
+                # Training Results Section
+                st.markdown("#### 📊 TRAINING SET PERFORMANCE")
+                st.markdown(f"""
+                <div class="result-card">
+                    <p><strong>Final Value:</strong> ${results['train_portfolio']['final_value']:,.2f}</p>
+                    <p><strong>Total Return:</strong> {results['train_portfolio']['total_return_pct']:+.2f}%</p>
+                    <p><strong>CAGR:</strong> {results['train_portfolio']['cagr']:.2f}%</p>
+                    <p><strong>Total Trades:</strong> {results['train_portfolio'].get('total_trades', 'N/A')}</p>
+                    <p><strong>Win Rate:</strong> {results['train_portfolio'].get('win_rate', 'N/A'):.1f}%</p>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("---")
 
-                with col2:
-                    st.metric(
-                        "Training Return",
-                        f"{results['train_portfolio']['total_return_pct']:.2f}%",
-                        f"CAGR: {results['train_portfolio']['cagr']:.2f}%"
-                    )
+                # Test Results Section
+                st.markdown("#### 🧪 TEST SET PERFORMANCE (Out-of-Sample)")
+                st.markdown(f"""
+                <div class="result-card">
+                    <p><strong>Final Value:</strong> ${results['test_portfolio']['final_value']:,.2f}</p>
+                    <p><strong>Total Return:</strong> {results['test_portfolio']['total_return_pct']:+.2f}%</p>
+                    <p><strong>CAGR:</strong> {results['test_portfolio']['cagr']:.2f}%</p>
+                    <p><strong>Total Trades:</strong> {results['test_portfolio'].get('total_trades', 'N/A')}</p>
+                    <p><strong>Win Rate:</strong> {results['test_portfolio'].get('win_rate', 'N/A'):.1f}%</p>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("---")
 
-                with col3:
-                    st.metric(
-                        "Test Return",
-                        f"{results['test_portfolio']['total_return_pct']:.2f}%",
-                        f"CAGR: {results['test_portfolio']['cagr']:.2f}%"
-                    )
+                # Strategy Degradation Analysis
+                st.markdown("#### 📉 STRATEGY VALIDATION")
+                degradation = ((results['test_portfolio']['total_return_pct'] /
+                              results['train_portfolio']['total_return_pct']) - 1) * 100 if \
+                              results['train_portfolio']['total_return_pct'] != 0 else 0
 
-                with col4:
-                    degradation = ((results['test_portfolio']['total_return_pct'] /
-                                  results['train_portfolio']['total_return_pct']) - 1) * 100 if \
-                                  results['train_portfolio']['total_return_pct'] != 0 else 0
+                degradation_color = "#00ff88" if abs(degradation) < 30 else "#ff3366"
+                degradation_status = "Robust Strategy" if abs(degradation) < 30 else "Potential Overfitting"
 
-                    st.metric(
-                        "Degradation",
-                        f"{degradation:.1f}%",
-                        "Robust" if abs(degradation) < 30 else "Overfitting Risk"
-                    )
+                st.markdown(f"""
+                <div class="result-card">
+                    <p><strong>Performance Degradation:</strong> <span style="color: {degradation_color};">{degradation:.1f}%</span></p>
+                    <p><strong>Strategy Status:</strong> <span style="color: {degradation_color};">{degradation_status}</span></p>
+                    <p><strong>Validation:</strong> {"✅ Strategy generalizes well to unseen data" if abs(degradation) < 30 else "⚠️ Strategy may be overfit to training data"}</p>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("---")
 
-                # SPY Benchmark Comparison
-                st.markdown("### BENCHMARK COMPARISON")
+                # Benchmark Comparison Section
+                st.markdown("#### 📈 BENCHMARK COMPARISON")
                 spy_data = results['spy_benchmark']
+                outperformance = results['test_portfolio']['total_return_pct'] - spy_data['total_return_pct']
+                outperformance_color = "#00ff88" if outperformance > 0 else "#ff3366"
 
-                benchmark_col1, benchmark_col2, benchmark_col3 = st.columns(3)
-
-                with benchmark_col1:
-                    st.metric(
-                        "IPO Strategy (Test)",
-                        f"{results['test_portfolio']['total_return_pct']:.2f}%",
-                        f"${results['test_portfolio']['final_value']:,.0f}"
-                    )
-
-                with benchmark_col2:
-                    st.metric(
-                        "SPY Buy & Hold",
-                        f"{spy_data['total_return_pct']:.2f}%",
-                        f"${spy_data['final_value']:,.0f}"
-                    )
-
-                with benchmark_col3:
-                    outperformance = results['test_portfolio']['total_return_pct'] - spy_data['total_return_pct']
-                    st.metric(
-                        "Outperformance",
-                        f"{outperformance:+.2f}%",
-                        "Beats SPY" if outperformance > 0 else "Underperforms SPY"
-                    )
+                st.markdown(f"""
+                <div class="result-card">
+                    <h5 style="margin-bottom: 15px;">IPO Strategy vs SPY Buy & Hold</h5>
+                    <p><strong>IPO Strategy (Test):</strong> {results['test_portfolio']['total_return_pct']:+.2f}% (${results['test_portfolio']['final_value']:,.0f})</p>
+                    <p><strong>SPY Buy & Hold:</strong> {spy_data['total_return_pct']:+.2f}% (${spy_data['final_value']:,.0f})</p>
+                    <p><strong>Outperformance:</strong> <span style="color: {outperformance_color};">{outperformance:+.2f}%</span></p>
+                    <p><strong>Result:</strong> <span style="color: {outperformance_color};">{"🎉 Beats SPY" if outperformance > 0 else "📉 Underperforms SPY"}</span></p>
+                </div>
+                """, unsafe_allow_html=True)
 
                 # Save results path
                 st.info(f"Results saved to: {results['output_dir']}")
@@ -456,64 +556,141 @@ with tab2:
     with col2:
         sort_option = st.selectbox("Sort By", ["Date (Newest)", "Date (Oldest)", "Return (High)", "Return (Low)"])
     with col3:
-        if st.button("REFRESH"):
+        if st.button("REFRESH", use_container_width=True):
             st.rerun()
 
     # Load existing backtests
     outputs_dir = Path("outputs")
     if outputs_dir.exists():
-        backtest_dirs = sorted([d for d in outputs_dir.iterdir() if d.is_dir() and d.name.startswith("backtest_")],
-                              reverse=True)
+        backtest_dirs = [d for d in outputs_dir.iterdir() if d.is_dir() and d.name.startswith("backtest_")]
+
+        # Load all backtest data for filtering and sorting
+        backtest_data = []
+        for backtest_dir in backtest_dirs:
+            results_file = backtest_dir / "analysis" / "backtest_results.json"
+            if results_file.exists():
+                try:
+                    with open(results_file, 'r') as f:
+                        results = json.load(f)
+
+                    # Parse folder name for date/time
+                    folder_parts = backtest_dir.name.split('_')
+                    if len(folder_parts) >= 3:
+                        run_date = folder_parts[1]
+                        run_time = folder_parts[2]
+
+                        # Convert to datetime for filtering
+                        try:
+                            run_datetime = datetime.strptime(f"{run_date} {run_time}", "%Y-%m-%d %H%M%S")
+                        except:
+                            run_datetime = datetime.now()
+
+                        backtest_data.append({
+                            'dir': backtest_dir,
+                            'datetime': run_datetime,
+                            'date': run_date,
+                            'time': run_time,
+                            'results': results
+                        })
+                except:
+                    continue
+
+        # Apply filtering
+        filtered_data = backtest_data.copy()
+        if filter_option == "Last 7 Days":
+            cutoff_date = datetime.now() - timedelta(days=7)
+            filtered_data = [d for d in filtered_data if d['datetime'] >= cutoff_date]
+        elif filter_option == "Last 30 Days":
+            cutoff_date = datetime.now() - timedelta(days=30)
+            filtered_data = [d for d in filtered_data if d['datetime'] >= cutoff_date]
+
+        # Apply sorting
+        if sort_option == "Date (Newest)":
+            filtered_data.sort(key=lambda x: x['datetime'], reverse=True)
+        elif sort_option == "Date (Oldest)":
+            filtered_data.sort(key=lambda x: x['datetime'])
+        elif sort_option == "Return (High)":
+            filtered_data.sort(key=lambda x: x['results']['test_portfolio'].get('total_return_pct', 0), reverse=True)
+        elif sort_option == "Return (Low)":
+            filtered_data.sort(key=lambda x: x['results']['test_portfolio'].get('total_return_pct', 0))
 
         # Display results
-        for backtest_dir in backtest_dirs[:10]:  # Show last 10
-            # Try to load results
-            results_file = backtest_dir / "analysis" / "backtest_results.json"
-            config_file = backtest_dir / "data" / "config.json"
+        if filtered_data:
+            for data in filtered_data[:20]:  # Show up to 20 results
+                backtest_dir = data['dir']
+                results = data['results']
+                run_date = data['date']
+                run_time = data['time']
 
-            if results_file.exists():
-                with open(results_file, 'r') as f:
-                    results = json.load(f)
+                # Create result card
+                with st.container():
+                    st.markdown(f"""
+                    <div class="result-card">
+                        <h4 style="color: #00ff88; margin-bottom: 10px;">{run_date} {run_time[:2]}:{run_time[2:4]}:{run_time[4:]}</h4>
+                        <p><strong>Strategy:</strong> {results['optimal_strategy']['window']}</p>
+                        <p><strong>Training Return:</strong> {results['train_portfolio']['total_return_pct']:.2f}%</p>
+                        <p><strong>Test Return:</strong> {results['test_portfolio']['total_return_pct']:.2f}%</p>
+                        <p><strong>Win Rate:</strong> {results['train_portfolio'].get('win_rate', 0):.1f}%</p>
+                    </div>
+                    """, unsafe_allow_html=True)
 
-                # Parse folder name for date/time
-                folder_parts = backtest_dir.name.split('_')
-                if len(folder_parts) >= 3:
-                    run_date = folder_parts[1]
-                    run_time = folder_parts[2]
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        if st.button(f"VIEW DETAILS", key=f"view_{backtest_dir.name}"):
+                            # Show detailed results in expander
+                            with st.expander("📊 Detailed Results", expanded=True):
+                                detail_col1, detail_col2 = st.columns(2)
 
-                    # Create result card
-                    with st.container():
-                        st.markdown(f"""
-                        <div class="result-card">
-                            <h4>{run_date} {run_time[:2]}:{run_time[2:4]}:{run_time[4:]}</h4>
-                            <p><b>Strategy:</b> {results['optimal_strategy']['window']}</p>
-                            <p><b>Training Return:</b> {results['train_portfolio']['total_return_pct']:.2f}%</p>
-                            <p><b>Test Return:</b> {results['test_portfolio']['total_return_pct']:.2f}%</p>
-                            <p><b>Win Rate:</b> {results['train_portfolio']['win_rate']:.1f}%</p>
-                        </div>
-                        """, unsafe_allow_html=True)
+                                with detail_col1:
+                                    st.markdown("**Training Set:**")
+                                    st.write(f"• Final Value: ${results['train_portfolio']['final_value']:,.2f}")
+                                    st.write(f"• CAGR: {results['train_portfolio']['cagr']:.2f}%")
+                                    st.write(f"• Total Trades: {results['train_portfolio'].get('total_trades', 'N/A')}")
 
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            if st.button(f"VIEW #{backtest_dir.name[-10:]}", key=f"view_{backtest_dir.name}"):
-                                st.session_state.selected_backtest = backtest_dir
-                        with col2:
-                            pdf_path = backtest_dir / "reports" / "IPO_Strategy_Complete_Report.pdf"
-                            if pdf_path.exists():
-                                with open(pdf_path, "rb") as pdf:
-                                    st.download_button(
-                                        "DOWNLOAD PDF",
-                                        pdf.read(),
-                                        file_name=f"report_{run_date}_{run_time}.pdf",
-                                        mime="application/pdf",
-                                        key=f"pdf_{backtest_dir.name}"
-                                    )
-                        with col3:
-                            if st.button(f"DELETE", key=f"del_{backtest_dir.name}"):
-                                if st.button(f"CONFIRM DELETE", key=f"confirm_del_{backtest_dir.name}"):
-                                    import shutil
+                                with detail_col2:
+                                    st.markdown("**Test Set:**")
+                                    st.write(f"• Final Value: ${results['test_portfolio']['final_value']:,.2f}")
+                                    st.write(f"• CAGR: {results['test_portfolio']['cagr']:.2f}%")
+                                    st.write(f"• Total Trades: {results['test_portfolio'].get('total_trades', 'N/A')}")
+
+                                st.markdown("**Configuration:**")
+                                st.write(f"• Period: {results.get('split_info', {}).get('train_start', 'N/A')} to {results.get('split_info', {}).get('test_end', 'N/A')}")
+                                st.write(f"• Strategy: {results['optimal_strategy']['window']}")
+
+                    with col2:
+                        pdf_path = backtest_dir / "reports" / "IPO_Strategy_Complete_Report.pdf"
+                        if pdf_path.exists():
+                            with open(pdf_path, "rb") as pdf:
+                                st.download_button(
+                                    "DOWNLOAD PDF",
+                                    pdf.read(),
+                                    file_name=f"ipo_report_{run_date}_{run_time}.pdf",
+                                    mime="application/pdf",
+                                    key=f"pdf_{backtest_dir.name}"
+                                )
+                        else:
+                            st.button("PDF N/A", disabled=True, key=f"no_pdf_{backtest_dir.name}")
+
+                    with col3:
+                        if st.button(f"DELETE", type="secondary", key=f"del_{backtest_dir.name}"):
+                            # Add confirmation in session state
+                            st.session_state[f"confirm_delete_{backtest_dir.name}"] = True
+
+                        # Show confirmation if delete was clicked
+                        if st.session_state.get(f"confirm_delete_{backtest_dir.name}", False):
+                            if st.button(f"✅ CONFIRM DELETE", type="primary", key=f"confirm_del_{backtest_dir.name}"):
+                                import shutil
+                                try:
                                     shutil.rmtree(backtest_dir)
+                                    st.success(f"Deleted backtest from {run_date}")
+                                    # Clean up session state
+                                    del st.session_state[f"confirm_delete_{backtest_dir.name}"]
                                     st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error deleting: {str(e)}")
+                    st.markdown("---")
+        else:
+            st.info(f"No backtests found for filter: {filter_option}")
     else:
         st.info("No backtests found. Run a new backtest to see results here.")
 
@@ -544,84 +721,261 @@ with tab3:
                 'Win Rate': r['train_portfolio']['win_rate']
             } for r in all_results])
 
-            # Performance over time chart
+            # Performance over time chart - Fixed to show complete timeline
+            st.markdown("#### 📈 PERFORMANCE OVER TIME")
             fig = go.Figure()
+
+            # Sort by date to ensure proper timeline
+            df_sorted = df.sort_values('Date')
+
             fig.add_trace(go.Scatter(
-                x=df['Date'],
-                y=df['Train Return'],
+                x=df_sorted['Date'],
+                y=df_sorted['Train Return'],
                 mode='lines+markers',
                 name='Training Return',
-                line=dict(color='#00ff88', width=2)
+                line=dict(color='#00ff88', width=3),
+                marker=dict(size=6)
             ))
             fig.add_trace(go.Scatter(
-                x=df['Date'],
-                y=df['Test Return'],
+                x=df_sorted['Date'],
+                y=df_sorted['Test Return'],
                 mode='lines+markers',
                 name='Test Return',
-                line=dict(color='#ff3366', width=2)
+                line=dict(color='#ff3366', width=3),
+                marker=dict(size=6)
             ))
             fig.update_layout(
-                title="Performance Over Time",
+                title=dict(text="", font=dict(size=16)),
                 xaxis_title="Date",
                 yaxis_title="Return (%)",
                 plot_bgcolor='#0a0a0a',
                 paper_bgcolor='#0a0a0a',
-                font=dict(color='white'),
+                font=dict(color='white', family='Helvetica Neue'),
                 showlegend=True,
-                hovermode='x unified'
+                hovermode='x unified',
+                height=400,
+                legend=dict(
+                    yanchor="top",
+                    y=0.99,
+                    xanchor="left",
+                    x=0.01
+                )
             )
-            fig.update_xaxes(gridcolor='#333333')
-            fig.update_yaxes(gridcolor='#333333')
+            fig.update_xaxes(
+                gridcolor='#333333',
+                showgrid=True,
+                type='category'  # Treat dates as categories to show all points
+            )
+            fig.update_yaxes(gridcolor='#333333', showgrid=True)
 
             st.plotly_chart(fig, use_container_width=True)
+            st.markdown("---")
 
-            # Strategy frequency
-            col1, col2 = st.columns(2)
+            # Most Common Strategies - Vertical Layout
+            st.markdown("#### 🎯 MOST COMMON STRATEGIES")
+            strategy_counts = df['Strategy'].value_counts().head(10)  # Show top 10
+            fig2 = go.Figure(data=[
+                go.Bar(
+                    x=strategy_counts.index,
+                    y=strategy_counts.values,
+                    marker=dict(color='#00ff88', line=dict(color='#ffffff', width=1)),
+                    text=strategy_counts.values,
+                    textposition='auto'
+                )
+            ])
+            fig2.update_layout(
+                title=dict(text="", font=dict(size=16)),
+                xaxis_title="Trading Strategy",
+                yaxis_title="Frequency",
+                plot_bgcolor='#0a0a0a',
+                paper_bgcolor='#0a0a0a',
+                font=dict(color='white', family='Helvetica Neue'),
+                height=400,
+                xaxis=dict(tickangle=45)
+            )
+            fig2.update_xaxes(gridcolor='#333333', showgrid=True)
+            fig2.update_yaxes(gridcolor='#333333', showgrid=True)
+            st.plotly_chart(fig2, use_container_width=True)
+            st.markdown("---")
 
-            with col1:
-                strategy_counts = df['Strategy'].value_counts()
-                fig2 = go.Figure(data=[
-                    go.Bar(
-                        x=strategy_counts.index,
-                        y=strategy_counts.values,
-                        marker=dict(color='#00ff88')
-                    )
-                ])
-                fig2.update_layout(
-                    title="Most Common Strategies",
-                    xaxis_title="Strategy",
-                    yaxis_title="Frequency",
+            # Win Rate Distribution - Full Width
+            st.markdown("#### 🏆 WIN RATE DISTRIBUTION")
+            fig3 = go.Figure(data=[
+                go.Histogram(
+                    x=df['Win Rate'],
+                    nbinsx=20,
+                    marker=dict(color='#ff3366', opacity=0.7, line=dict(color='#ffffff', width=1)),
+                    name="Win Rate"
+                )
+            ])
+            fig3.update_layout(
+                title=dict(text="", font=dict(size=16)),
+                xaxis_title="Win Rate (%)",
+                yaxis_title="Number of Backtests",
+                plot_bgcolor='#0a0a0a',
+                paper_bgcolor='#0a0a0a',
+                font=dict(color='white', family='Helvetica Neue'),
+                height=400,
+                showlegend=False
+            )
+            fig3.update_xaxes(gridcolor='#333333', showgrid=True)
+            fig3.update_yaxes(gridcolor='#333333', showgrid=True)
+            st.plotly_chart(fig3, use_container_width=True)
+            st.markdown("---")
+
+            # SPY Benchmark Analysis
+            st.markdown("#### 📊 SPY BENCHMARK COMPARISON")
+
+            # Load SPY benchmark data from all backtests
+            spy_data = []
+            strategy_vs_spy = []
+
+            for backtest_dir in outputs_dir.iterdir():
+                if backtest_dir.is_dir() and backtest_dir.name.startswith("backtest_"):
+                    results_file = backtest_dir / "analysis" / "backtest_results.json"
+                    if results_file.exists():
+                        try:
+                            with open(results_file, 'r') as f:
+                                result = json.load(f)
+
+                            # Only include results that have SPY benchmark data
+                            if 'spy_benchmark' in result:
+                                spy_return = result['spy_benchmark']['total_return_pct']
+                                test_return = result['test_portfolio']['total_return_pct']
+                                outperformance = test_return - spy_return
+
+                                spy_data.append(spy_return)
+                                strategy_vs_spy.append({
+                                    'Date': backtest_dir.name.split('_')[1],
+                                    'Strategy Return': test_return,
+                                    'SPY Return': spy_return,
+                                    'Outperformance': outperformance,
+                                    'Beats SPY': outperformance > 0
+                                })
+                        except:
+                            continue
+
+            if strategy_vs_spy:
+                spy_df = pd.DataFrame(strategy_vs_spy)
+
+                # SPY vs Strategy Performance Chart
+                fig_spy = go.Figure()
+
+                fig_spy.add_trace(go.Scatter(
+                    x=spy_df['Date'],
+                    y=spy_df['Strategy Return'],
+                    mode='lines+markers',
+                    name='IPO Strategy',
+                    line=dict(color='#00ff88', width=3),
+                    marker=dict(size=8)
+                ))
+
+                fig_spy.add_trace(go.Scatter(
+                    x=spy_df['Date'],
+                    y=spy_df['SPY Return'],
+                    mode='lines+markers',
+                    name='SPY Buy & Hold',
+                    line=dict(color='#ff3366', width=3),
+                    marker=dict(size=8)
+                ))
+
+                fig_spy.update_layout(
+                    title=dict(text="", font=dict(size=16)),
+                    xaxis_title="Backtest Date",
+                    yaxis_title="Total Return (%)",
                     plot_bgcolor='#0a0a0a',
                     paper_bgcolor='#0a0a0a',
-                    font=dict(color='white')
+                    font=dict(color='white', family='Helvetica Neue'),
+                    showlegend=True,
+                    hovermode='x unified',
+                    height=400,
+                    legend=dict(
+                        yanchor="top",
+                        y=0.99,
+                        xanchor="left",
+                        x=0.01
+                    )
                 )
-                fig2.update_xaxes(gridcolor='#333333')
-                fig2.update_yaxes(gridcolor='#333333')
-                st.plotly_chart(fig2, use_container_width=True)
+                fig_spy.update_xaxes(gridcolor='#333333', showgrid=True, type='category')
+                fig_spy.update_yaxes(gridcolor='#333333', showgrid=True)
 
-            with col2:
-                # Win rate distribution
-                fig3 = go.Figure(data=[
+                st.plotly_chart(fig_spy, use_container_width=True)
+                st.markdown("---")
+
+                # Outperformance Distribution
+                st.markdown("#### 🎯 OUTPERFORMANCE DISTRIBUTION")
+                fig_outperf = go.Figure(data=[
                     go.Histogram(
-                        x=df['Win Rate'],
-                        nbinsx=20,
-                        marker=dict(color='#ff3366')
+                        x=spy_df['Outperformance'],
+                        nbinsx=15,
+                        marker=dict(
+                            color=['#00ff88' if x > 0 else '#ff3366' for x in spy_df['Outperformance']],
+                            opacity=0.7,
+                            line=dict(color='#ffffff', width=1)
+                        ),
+                        name="Outperformance"
                     )
                 ])
-                fig3.update_layout(
-                    title="Win Rate Distribution",
-                    xaxis_title="Win Rate (%)",
-                    yaxis_title="Frequency",
+                fig_outperf.update_layout(
+                    title=dict(text="", font=dict(size=16)),
+                    xaxis_title="Outperformance vs SPY (%)",
+                    yaxis_title="Number of Backtests",
                     plot_bgcolor='#0a0a0a',
                     paper_bgcolor='#0a0a0a',
-                    font=dict(color='white')
+                    font=dict(color='white', family='Helvetica Neue'),
+                    height=400,
+                    showlegend=False
                 )
-                fig3.update_xaxes(gridcolor='#333333')
-                fig3.update_yaxes(gridcolor='#333333')
-                st.plotly_chart(fig3, use_container_width=True)
+                fig_outperf.update_xaxes(gridcolor='#333333', showgrid=True)
+                fig_outperf.update_yaxes(gridcolor='#333333', showgrid=True)
+
+                # Add vertical line at zero
+                fig_outperf.add_vline(x=0, line_dash="dash", line_color="white", opacity=0.7)
+
+                st.plotly_chart(fig_outperf, use_container_width=True)
+                st.markdown("---")
+
+                # SPY Comparison Statistics
+                st.markdown("#### 🏆 SPY BENCHMARK STATISTICS")
+                beats_spy_count = sum(spy_df['Beats SPY'])
+                total_backtests = len(spy_df)
+                win_rate_vs_spy = (beats_spy_count / total_backtests) * 100
+                avg_outperformance = spy_df['Outperformance'].mean()
+
+                spy_col1, spy_col2, spy_col3, spy_col4 = st.columns(4)
+
+                with spy_col1:
+                    st.metric(
+                        "Win Rate vs SPY",
+                        f"{win_rate_vs_spy:.1f}%",
+                        f"{beats_spy_count}/{total_backtests} wins"
+                    )
+
+                with spy_col2:
+                    st.metric(
+                        "Avg Outperformance",
+                        f"{avg_outperformance:+.2f}%",
+                        "Beats SPY" if avg_outperformance > 0 else "Underperforms"
+                    )
+
+                with spy_col3:
+                    st.metric(
+                        "Best Outperformance",
+                        f"{spy_df['Outperformance'].max():+.2f}%"
+                    )
+
+                with spy_col4:
+                    st.metric(
+                        "Worst Outperformance",
+                        f"{spy_df['Outperformance'].min():+.2f}%"
+                    )
+
+                st.markdown("---")
+            else:
+                st.info("📊 No SPY benchmark data available. Run new backtests to see SPY comparison analytics.")
 
             # Summary statistics
-            st.markdown("### SUMMARY STATISTICS")
+            st.markdown("#### 📈 SUMMARY STATISTICS")
             col1, col2, col3, col4 = st.columns(4)
 
             with col1:
