@@ -21,14 +21,25 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Page configuration
 st.set_page_config(
     page_title="IPO Backtest Terminal",
-    page_icon="📊",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for dark theme with sharp edges
+# Custom CSS for dark theme with sharp edges and Helvetica fonts
 st.markdown("""
 <style>
+    /* Font family override */
+    * {
+        font-family: 'Helvetica Neue', 'Helvetica', sans-serif !important;
+    }
+
+    /* Bold headings and buttons */
+    h1, h2, h3, h4, h5, h6, .stButton > button, .main-header {
+        font-family: 'Helvetica Bold', 'Helvetica Neue', 'Helvetica', sans-serif !important;
+        font-weight: 700;
+    }
+
     /* Main background */
     .stApp {
         background-color: #0a0a0a;
@@ -162,7 +173,7 @@ if 'backtest_results' not in st.session_state:
 st.markdown('<div class="main-header">IPO BACKTEST TERMINAL</div>', unsafe_allow_html=True)
 
 # Main tabs
-tab1, tab2, tab3 = st.tabs(["📊 NEW BACKTEST", "📁 GALLERY", "📈 ANALYTICS"])
+tab1, tab2, tab3 = st.tabs(["NEW BACKTEST", "GALLERY", "ANALYTICS"])
 
 # Tab 1: New Backtest
 with tab1:
@@ -243,7 +254,7 @@ with tab1:
         """)
 
         # Run button
-        if st.button("▶ RUN BACKTEST", use_container_width=True, disabled=st.session_state.running_backtest):
+        if st.button("RUN BACKTEST", use_container_width=True, disabled=st.session_state.running_backtest):
             st.session_state.running_backtest = True
 
             # Create config
@@ -275,7 +286,7 @@ with tab1:
                 st.session_state.running_backtest = False
 
                 # Success message
-                st.success("✅ Backtest Complete!")
+                st.success("Backtest Complete!")
 
                 # Display results
                 st.markdown("### RESULTS")
@@ -311,14 +322,14 @@ with tab1:
                     st.metric(
                         "Degradation",
                         f"{degradation:.1f}%",
-                        "✅ Robust" if abs(degradation) < 30 else "⚠️ Overfitting"
+                        "Robust" if abs(degradation) < 30 else "Overfitting Risk"
                     )
 
                 # Save results path
-                st.info(f"📁 Results saved to: {results['output_dir']}")
+                st.info(f"Results saved to: {results['output_dir']}")
 
             except Exception as e:
-                st.error(f"❌ Backtest failed: {str(e)}")
+                st.error(f"Backtest failed: {str(e)}")
                 st.session_state.running_backtest = False
 
 # Tab 2: Gallery
@@ -333,7 +344,7 @@ with tab2:
     with col2:
         sort_option = st.selectbox("Sort By", ["Date (Newest)", "Date (Oldest)", "Return (High)", "Return (Low)"])
     with col3:
-        if st.button("🔄 REFRESH"):
+        if st.button("REFRESH"):
             st.rerun()
 
     # Load existing backtests
@@ -362,7 +373,7 @@ with tab2:
                     with st.container():
                         st.markdown(f"""
                         <div class="result-card">
-                            <h4>📊 {run_date} {run_time[:2]}:{run_time[2:4]}:{run_time[4:]}</h4>
+                            <h4>{run_date} {run_time[:2]}:{run_time[2:4]}:{run_time[4:]}</h4>
                             <p><b>Strategy:</b> {results['optimal_strategy']['window']}</p>
                             <p><b>Training Return:</b> {results['train_portfolio']['total_return_pct']:.2f}%</p>
                             <p><b>Test Return:</b> {results['test_portfolio']['total_return_pct']:.2f}%</p>

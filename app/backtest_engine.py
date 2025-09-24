@@ -199,7 +199,8 @@ class IPOBacktestEngine:
         failed = []
 
         total = len(self.ipo_universe)
-        for idx, row in self.ipo_universe.iterrows():
+        # Use enumerate to get sequential counter instead of DataFrame index
+        for i, (idx, row) in enumerate(self.ipo_universe.iterrows()):
             ticker = row['Ticker']
             ipo_date = row['IPO_Date']
             ipo_price = row.get('IPO_Price', 20)
@@ -223,8 +224,10 @@ class IPOBacktestEngine:
             except:
                 failed.append(ticker)
 
-            if progress_callback and idx % 100 == 0:
-                progress_callback(0.3 + (idx/total) * 0.3, f"Collecting data: {idx}/{total}")
+            if progress_callback and i % 100 == 0:
+                # Use min() to ensure progress never exceeds 0.6
+                progress_value = min(0.3 + (i/total) * 0.3, 0.6)
+                progress_callback(progress_value, f"Collecting data: {i}/{total}")
 
         # Save cache
         if self.config.get('CACHE_DATA', True):
@@ -310,7 +313,9 @@ class IPOBacktestEngine:
 
                 window_count += 1
                 if progress_callback:
-                    progress_callback(0.6 + (window_count/total_windows) * 0.2,
+                    # Ensure progress stays within bounds
+                    progress_value = min(0.6 + (window_count/total_windows) * 0.2, 0.8)
+                    progress_callback(progress_value,
                                     f"Analyzing windows: {window_count}/{total_windows}")
 
         results_df = pd.DataFrame(results)

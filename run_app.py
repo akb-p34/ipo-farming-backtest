@@ -31,8 +31,8 @@ def main():
     print("\n" + "="*60)
     print("         IPO BACKTEST TERMINAL")
     print("="*60)
-    print("\n✨ Starting application...")
-    print("📊 Opening browser window...")
+    print("\nStarting application...")
+    print("Opening browser window...")
     print("\nPress Ctrl+C to stop the server\n")
 
     sys.exit(stcli.main())
