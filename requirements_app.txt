@@ -1,0 +1,7 @@
+streamlit>=1.28.0
+plotly>=5.17.0
+streamlit-pdf-viewer>=0.0.8
+watchdog>=3.0.0
+scipy>=1.10.0
+reportlab>=4.0.0
+yfinance>=0.2.0

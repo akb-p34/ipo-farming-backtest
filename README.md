@@ -8,14 +8,18 @@ A sophisticated backtesting system for IPO day trading strategies. Analyze 90+ t
 
 ## 🎯 Key Features
 
-- **🚀 Plug-and-Play**: Single Jupyter notebook - just run all cells
-- **📊 Comprehensive Analysis**: Tests 91 different trading windows automatically
+- **🖥️ Modern Terminal UI**: Professional dark-themed interface with real-time updates
+- **🚀 Plug-and-Play**: Single command launch or Jupyter notebook
+- **📊 Train-Test Split**: Robust 70/30 backtesting with out-of-sample validation
+- **📈 Comprehensive Analysis**: Tests 78+ different trading windows automatically
 - **🎲 Dual Mode Operation**:
   - Simulated data (always works, no setup required)
-  - IBKR live data (optional, for real market data)
-- **📈 Advanced Analytics**: Win rates, Sharpe ratios, risk metrics
-- **🎨 Beautiful Visualizations**: Heatmaps, performance charts, detailed dashboards
-- **📝 Actionable Reports**: Auto-generated strategy recommendations
+  - IBKR/Yahoo live data (optional, for real market data)
+- **📊 Advanced Analytics**: Win rates, Sharpe ratios, statistical significance testing
+- **🎨 Beautiful Visualizations**: Interactive Plotly charts, heatmaps, dashboards
+- **📝 Professional Reports**: Auto-generated PDF reports with recommendations
+- **📁 Result Gallery**: Browse and compare all historical backtests
+- **🔍 Audit Framework**: Comprehensive validation checklist in AUDIT folder
 
 ## 🖼️ Sample Output
 
@@ -33,7 +37,7 @@ The system generates comprehensive analysis dashboards showing:
 ### Prerequisites
 
 - Python 3.9 or higher
-- Jupyter Notebook or JupyterLab
+- Jupyter Notebook or JupyterLab (for notebook analysis)
 - (Optional) Interactive Brokers TWS/Gateway for live data
 
 ### Installation
@@ -44,14 +48,42 @@ git clone https://github.com/yourusername/ipo-farming-backtest.git
 cd ipo-farming-backtest
 ```
 
-2. **Open Jupyter Notebook**
+2. **Install dependencies**
+```bash
+pip install -r requirements.txt
+pip install -r requirements_app.txt
+```
+
+## 🖥️ NEW: Terminal UI Application
+
+### Launch the Modern Terminal Interface
+
+```bash
+# Mac/Linux
+./run_app.sh
+
+# Windows
+run_app.bat
+
+# Or directly with Python
+python run_app.py
+```
+
+The terminal UI features:
+- **📊 Dark Finance Theme**: Sharp, modern interface with black background
+- **⚡ Real-time Progress**: Live updates during backtest execution
+- **📁 Gallery View**: Browse all historical backtest results
+- **📈 Analytics Dashboard**: Compare performance across multiple backtests
+- **📄 PDF Viewer**: View reports directly in the application
+- **🎯 Custom Configuration**: Adjust train/test splits, date ranges, and more
+
+### Using the Jupyter Notebook
+
 ```bash
 jupyter notebook IPO.ipynb
 ```
 
-3. **Run all cells** (Cell → Run All)
-
-That's it! Results will appear in the `outputs/` directory.
+Run all cells (Cell → Run All) for traditional notebook analysis.
 
 ## 📖 Usage Guide
 

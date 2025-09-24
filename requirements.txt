@@ -7,3 +7,6 @@ openpyxl>=3.0.0
 pytz>=2021.1
 tqdm>=4.62.0
 ib-insync>=0.9.70
+reportlab>=4.0.0
+scipy>=1.10.0
+yfinance>=0.2.0

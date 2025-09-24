@@ -53,6 +53,8 @@ desktop.ini
 # Environment
 .env
 .venv
+venv/
+env/
 
 # Logs
 *.log
@@ -61,6 +63,10 @@ desktop.ini
 .cache/
 cache/
 *.cache
+
+# Streamlit
+.streamlit/
+*.streamlit/
 
 # Temporary files
 tmp/
