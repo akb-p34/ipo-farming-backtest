@@ -1,0 +1,11 @@
+{
+  "START_DATE": "2000-01-01",
+  "END_DATE": "2025-09-30",
+  "INITIAL_CAPITAL": 100000,
+  "DATA_MODE": "SIMULATION",
+  "USE_ALL_TICKERS": true,
+  "MAX_TICKERS": null,
+  "CACHE_DATA": true,
+  "GENERATE_PDF": true,
+  "PARALLEL_WORKERS": 4
+}

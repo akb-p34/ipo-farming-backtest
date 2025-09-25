@@ -1,0 +1,17 @@
+{
+  "initial_capital": 100000,
+  "final_value": 111291.71257449858,
+  "total_return_pct": 11.291712574498591,
+  "total_return_dollars": 11291.712574498582,
+  "years": 25.021218343600275,
+  "cagr": 0.42849094773931284,
+  "total_trades": 6303,
+  "win_rate": 50.86466761859432,
+  "avg_trade_return": 0.08532904184895893,
+  "max_drawdown": -1.3322554141860659,
+  "sharpe_ratio": 0.6312755466998208,
+  "best_trade_pct": 13.599336092784,
+  "worst_trade_pct": -12.26766162677657,
+  "best_trade_ticker": "SKWD",
+  "worst_trade_ticker": "TWLO"
+}

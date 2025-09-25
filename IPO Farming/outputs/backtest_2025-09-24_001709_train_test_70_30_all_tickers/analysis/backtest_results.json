@@ -1,0 +1,44 @@
+{
+  "split_info": {
+    "train_count": 4412,
+    "test_count": 1891,
+    "train_start": "2000-01-24 00:00:00",
+    "train_end": "2020-08-31 00:00:00",
+    "test_start": "2020-09-01 00:00:00",
+    "test_end": "2025-01-31 00:00:00"
+  },
+  "optimal_strategy": {
+    "window": "10:30-12:30",
+    "buy_time": "10:30",
+    "sell_time": "12:30",
+    "duration_hrs": 2.0,
+    "n_tickers": 4310,
+    "avg_return": 0.0928679080544333,
+    "std_return": 1.6704324661661205,
+    "win_rate": 51.87935034802784,
+    "sharpe": 0.05559512876780845
+  },
+  "train_portfolio": {
+    "initial_capital": 100000,
+    "final_value": 108334.82645633722,
+    "total_return_pct": 8.334826456337229,
+    "cagr": 0.38933579169677657,
+    "total_trades": 4412,
+    "win_rate": 51.94922937443336
+  },
+  "test_portfolio": {
+    "initial_capital": 100000,
+    "final_value": 101079.42081288558,
+    "total_return_pct": 1.0794208128855898,
+    "cagr": 0.24341156736664704,
+    "total_trades": 1891,
+    "win_rate": 50.97831835007932
+  },
+  "spy_benchmark": {
+    "total_return_pct": 1061.5745953032508,
+    "final_value": 1161574.595303251,
+    "cagr": 10.0,
+    "initial_capital": 100000
+  },
+  "output_dir": "outputs/backtest_2025-09-24_001709_train_test_70_30_all_tickers"
+}
