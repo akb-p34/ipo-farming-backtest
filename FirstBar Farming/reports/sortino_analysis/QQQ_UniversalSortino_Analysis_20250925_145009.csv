@@ -1,0 +1,5 @@
+Asset,Sortino_Ratio,Ranking,Risk_Grade,Strategy_Details
+QQQ Buy-Hold,0.1126379225211704,1,POOR,Buy-Hold
+TQQQ Buy-Hold,0.11126559445083285,2,POOR,Buy-Hold
+SPY Buy-Hold,-0.00810270367497813,3,POOR,Buy-Hold
+FirstBar Strategy,-14.499431800701426,4,POOR,"Universal (buy, 1.0%)"

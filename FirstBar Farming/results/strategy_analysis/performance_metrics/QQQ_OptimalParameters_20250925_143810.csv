@@ -1,0 +1,2 @@
+ticker,optimal_profit_target,optimal_mode,training_sortino,training_return_pct,training_trades,testing_sortino,testing_return_pct,testing_trades,performance_consistency,train_test_split,optimization_metric,timestamp,analysis_date
+QQQ,1.0,buy,-21.621205874671823,0.10444854327254871,275,-14.499431800701426,0.00445498407438572,122,7.121774073970396,0.7,sortino_ratio,20250925_143810,2025-09-25 14:38:10
