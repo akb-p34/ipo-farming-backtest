@@ -1,0 +1,2 @@
+Analysis_Date,Strategy_Ticker,Strategy_Mode,Profit_Target,Initial_Capital,Final_Value,Total_Return_Pct,Annualized_Return,Sharpe_Ratio,Sortino_Ratio,Max_Drawdown,Calmar_Ratio,Total_Trades
+2025-09-25 13:04:55,TQQQ,both,2.2,100000,100277.46375989844,0.2774637598984409,0.0008641489136071989,-5.3727946783184315,-6.227816281749455,-0.006170454148036804,0.1400462417960171,748
