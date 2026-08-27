@@ -82,3 +82,8 @@ temp/
 # Keep example outputs for documentation
 !outputs/ipo_analysis_dashboard.png
 !outputs/window_analysis.png
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key

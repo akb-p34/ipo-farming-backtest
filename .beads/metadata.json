@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "Trading_Expirements",
+  "project_id": "a9a9c2d3-f3a5-4bc7-ab73-6f2c21b43140"
+}
